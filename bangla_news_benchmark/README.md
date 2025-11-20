@@ -1,6 +1,13 @@
 # Bangla News Classification Benchmark
 
-A comprehensive benchmarking framework for Bangla news classification using deep learning models. This framework compares the performance of various neural network architectures on the Bangla news categorization task.
+A comprehensive, production-ready benchmarking framework for Bangla news classification using deep learning models. This framework compares the performance of various neural network architectures on the Bangla news categorization task.
+
+**✨ Key Features:**
+- 🚀 **Multi-Platform Support**: Runs on CPU, GPU (CUDA), and TPU (Google Cloud)
+- ⚡ **Auto-Detection**: Automatically detects and optimizes for available hardware
+- 🎯 **5 State-of-the-Art Models**: LSTM variants + Transformer models
+- 📊 **Comprehensive Metrics**: Accuracy, Precision, Recall, F1-Score
+- 🔄 **Reproducible**: Fixed seeds and deterministic operations
 
 ## Models
 
@@ -48,18 +55,35 @@ bangla_news_benchmark/
 
 ## Requirements
 
+### For GPU (NVIDIA CUDA)
+
 Install required dependencies:
 
 ```bash
-pip install torch torchvision torchaudio
+pip install -r requirements.txt
+```
+
+Or manually:
+```bash
+pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
 pip install transformers datasets accelerate
 pip install scikit-learn pandas numpy tqdm
 ```
 
-For GPU support (recommended):
+### For TPU (Google Cloud TPU VMs)
+
 ```bash
-pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+# Install PyTorch XLA for TPU support
+pip install torch~=2.0.0 torch_xla[tpu]~=2.0.0 -f https://storage.googleapis.com/libtpu-releases/index.html
+
+# Install other dependencies
+pip install transformers datasets accelerate
+pip install scikit-learn pandas numpy tqdm
 ```
+
+**Note**: The code automatically detects TPU availability and switches between:
+- **GPU**: FP16 mixed precision
+- **TPU**: BF16 (bfloat16) mixed precision
 
 ## Usage
 
@@ -189,22 +213,38 @@ Trained models are saved in the `checkpoints/` directory:
 
 ## Hardware Requirements
 
-### Minimum
+### Minimum (CPU Only)
 - CPU: 4+ cores
 - RAM: 16GB
 - Storage: 10GB
+- **Note**: Training will be slow on CPU
 
-### Recommended (for faster training)
-- GPU: NVIDIA T4 or better
-- VRAM: 16GB+ (for transformer models with batch size 16)
-- RAM: 32GB
-- Storage: 20GB (for cached datasets and models)
+### GPU (Recommended)
+- **GPU**: NVIDIA T4, V100, A100, or better
+- **VRAM**: 16GB+ (for transformer models with batch size 16)
+- **RAM**: 32GB
+- **Storage**: 20GB (for cached datasets and models)
 
-### Kaggle T4x2 GPUs
-This framework is optimized for Kaggle T4x2 GPUs and will automatically utilize:
+**Kaggle T4x2 GPUs**: This framework will automatically utilize:
 - Multi-GPU training (via Accelerate)
 - Mixed precision (FP16)
 - Distributed data loading
+
+### TPU (Google Cloud TPU VMs)
+- **TPU**: TPU v2, v3, or v4
+- **TPU Cores**: 8+ cores recommended
+- **RAM**: 32GB+
+- **Storage**: 20GB
+
+**TPU Features**: The framework automatically enables:
+- Multi-core TPU training (via Accelerate)
+- Mixed precision (BF16 - bfloat16)
+- XLA compilation and optimization
+- Distributed data loading
+
+**TPU Batch Size Recommendations**:
+- LSTM models: Increase batch size to 64-128 for optimal TPU utilization
+- Transformer models: Increase batch size to 32-64
 
 ## Reproducibility
 

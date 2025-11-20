@@ -1,5 +1,6 @@
 """
 Bidirectional LSTM model for Bangla news classification
+TPU and GPU compatible
 """
 import torch
 import torch.nn as nn
@@ -12,7 +13,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from utils.metrics import compute_metrics, get_classification_report
 from utils.training_utils import (
     set_seed, EarlyStopping, save_checkpoint, load_checkpoint,
-    count_parameters, get_device, AverageMeter
+    count_parameters, get_device, optimizer_step, mark_step, AverageMeter
 )
 
 
@@ -159,7 +160,8 @@ def train_bilstm(data_dict, config):
 
             # Backward pass
             loss.backward()
-            optimizer.step()
+            optimizer_step(optimizer, device)  # TPU-compatible optimizer step
+            mark_step(device)  # Mark step for TPU (no-op on GPU/CPU)
 
             train_loss_meter.update(loss.item(), input_ids.size(0))
             pbar.set_postfix({'loss': f'{train_loss_meter.avg:.4f}'})
@@ -201,7 +203,8 @@ def train_bilstm(data_dict, config):
             best_val_loss = val_loss_meter.avg
             save_checkpoint(
                 model, optimizer, epoch, val_loss_meter.avg,
-                config.get('model_save_path', 'checkpoints/bilstm_best.pt')
+                config.get('model_save_path', 'checkpoints/bilstm_best.pt'),
+                device=device  # Pass device for TPU compatibility
             )
             print(f"  → Saved best model (val_loss: {best_val_loss:.4f})")
 

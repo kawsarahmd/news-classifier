@@ -6,8 +6,12 @@ from .training_utils import (
     load_checkpoint,
     count_parameters,
     get_device,
+    is_tpu_device,
+    optimizer_step,
+    mark_step,
     AverageMeter,
-    format_time
+    format_time,
+    TPU_AVAILABLE
 )
 
 __all__ = [
@@ -21,6 +25,10 @@ __all__ = [
     'load_checkpoint',
     'count_parameters',
     'get_device',
+    'is_tpu_device',
+    'optimizer_step',
+    'mark_step',
     'AverageMeter',
-    'format_time'
+    'format_time',
+    'TPU_AVAILABLE'
 ]

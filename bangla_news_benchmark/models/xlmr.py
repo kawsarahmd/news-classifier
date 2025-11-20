@@ -1,5 +1,6 @@
 """
 XLM-RoBERTa model for Bangla news classification using Accelerate
+TPU and GPU compatible
 """
 import torch
 import torch.nn as nn
@@ -12,7 +13,7 @@ import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from utils.metrics import compute_metrics, get_classification_report
-from utils.training_utils import set_seed, EarlyStopping, AverageMeter
+from utils.training_utils import set_seed, EarlyStopping, AverageMeter, TPU_AVAILABLE
 
 
 def train_xlmr(data_dict, config):
@@ -29,8 +30,10 @@ def train_xlmr(data_dict, config):
     # Set seed for reproducibility
     set_seed(config.get('seed', 42))
 
-    # Initialize Accelerator for multi-GPU and FP16 support
-    accelerator = Accelerator(mixed_precision='fp16')
+    # Initialize Accelerator with appropriate mixed precision
+    # TPU uses bfloat16, GPU uses float16
+    mixed_precision = 'bf16' if TPU_AVAILABLE else 'fp16'
+    accelerator = Accelerator(mixed_precision=mixed_precision)
 
     # Print device info
     print(f"Using device: {accelerator.device}")

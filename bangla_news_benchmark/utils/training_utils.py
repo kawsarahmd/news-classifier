@@ -1,11 +1,20 @@
 """
 Common training utilities and helper functions
+Supports GPU (CUDA) and TPU (XLA) devices
 """
 import torch
 import numpy as np
 import random
 import os
 from pathlib import Path
+
+# Try to import torch_xla for TPU support
+try:
+    import torch_xla.core.xla_model as xm
+    TPU_AVAILABLE = True
+except ImportError:
+    TPU_AVAILABLE = False
+    xm = None
 
 
 def set_seed(seed=42):
@@ -72,9 +81,9 @@ class EarlyStopping:
             return False
 
 
-def save_checkpoint(model, optimizer, epoch, loss, filepath):
+def save_checkpoint(model, optimizer, epoch, loss, filepath, device=None):
     """
-    Save model checkpoint
+    Save model checkpoint (TPU-compatible)
 
     Args:
         model: PyTorch model
@@ -82,6 +91,7 @@ def save_checkpoint(model, optimizer, epoch, loss, filepath):
         epoch: Current epoch
         loss: Current loss
         filepath: Path to save checkpoint
+        device: Device (for TPU detection)
     """
     Path(filepath).parent.mkdir(parents=True, exist_ok=True)
 
@@ -91,7 +101,12 @@ def save_checkpoint(model, optimizer, epoch, loss, filepath):
         'optimizer_state_dict': optimizer.state_dict(),
         'loss': loss,
     }
-    torch.save(checkpoint, filepath)
+
+    # Use XLA save for TPU, regular torch.save otherwise
+    if device is not None and is_tpu_device(device):
+        xm.save(checkpoint, filepath)
+    else:
+        torch.save(checkpoint, filepath)
 
 
 def load_checkpoint(filepath, model, optimizer=None):
@@ -130,11 +145,19 @@ def count_parameters(model):
 
 def get_device():
     """
-    Get available device (GPU if available, else CPU)
+    Get available device (TPU if available, else GPU, else CPU)
 
     Returns:
-        torch.device
+        torch.device or XLA device
     """
+    if TPU_AVAILABLE:
+        try:
+            device = xm.xla_device()
+            print(f"Using TPU: {device}")
+            return device
+        except:
+            pass
+
     if torch.cuda.is_available():
         device = torch.device('cuda')
         print(f"Using GPU: {torch.cuda.get_device_name(0)}")
@@ -143,6 +166,46 @@ def get_device():
         print("Using CPU")
 
     return device
+
+
+def is_tpu_device(device):
+    """
+    Check if device is a TPU device
+
+    Args:
+        device: Device to check
+
+    Returns:
+        True if TPU, False otherwise
+    """
+    return TPU_AVAILABLE and 'xla' in str(device).lower()
+
+
+def optimizer_step(optimizer, device=None):
+    """
+    Perform optimizer step (TPU-compatible)
+
+    Args:
+        optimizer: Optimizer
+        device: Device (for TPU detection)
+    """
+    if device is not None and is_tpu_device(device):
+        # TPU: Use XLA optimizer step
+        xm.optimizer_step(optimizer)
+    else:
+        # GPU/CPU: Regular step
+        optimizer.step()
+
+
+def mark_step(device=None):
+    """
+    Mark step for XLA graph execution (TPU only, no-op for GPU/CPU)
+
+    Args:
+        device: Device (for TPU detection)
+    """
+    if device is not None and is_tpu_device(device):
+        xm.mark_step()
 
 
 class AverageMeter:
