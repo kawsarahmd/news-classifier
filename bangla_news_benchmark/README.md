@@ -242,31 +242,4 @@ Edit the `config` dictionary in `benchmark.py` for each model:
 }
 ```
 
-## Citation
 
-If you use this benchmark framework, please cite:
-
-```bibtex
-@misc{bangla_news_benchmark,
-  title={Bangla News Classification Benchmark},
-  author={Your Name},
-  year={2025},
-  howpublished={\url{https://github.com/yourusername/bangla-news-benchmark}}
-}
-```
-
-## License
-
-MIT License
-
-## Acknowledgments
-
-- Dataset: `kawsarahmd/bangla-news-category-plos-one`
-- BanglaBERT: `csebuetnlp/banglabert`
-- XLM-RoBERTa: Facebook AI
-- HuggingFace: Transformers, Datasets, Accelerate libraries
-- PyTorch: Deep learning framework
-
-## Contact
-
-For issues, questions, or contributions, please open an issue on the GitHub repository.
